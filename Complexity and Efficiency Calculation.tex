@@ -1,0 +1,112 @@
+\documentclass{article}
+\usepackage{graphicx} 
+\usepackage{geometry}
+\geometry{left=1in, right=1in, top=1in, bottom=1in}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{minted}
+\title{CS 6220 HW1}
+\author{Qidian Gao}
+\date{January 24th 2024}
+
+\begin{document}
+\maketitle
+\section{Question 1}
+\begin{itemize}
+    \item a) \textbf{Theorem:} The maximum speedup possible can be solved by a given function $S(p) = \frac{\text{Serial run time}}{\text{Parallel run time}}$ which describes how much improvement can we make using parallel computing against its serial counterparts.\par
+    \textbf{Answer:} From the given formulas, we have $S(p) = \frac{4n}{8n/p+1000log(p)}$. As $n>>p$, the term $8n/p$ dominates over $1000log(p)$, therefore we simplify the solution to approximately $\frac{4n}{8n/p}=\frac{4p}{8}=\frac{2}{p}$.
+    \item b) \textbf{Theorem: }The efficiency is a parameter to measure how efficient is the parallel network. It's given by $E(p)=\frac{S(p)}{p}$.\par
+    \textbf{Answer:} In this case, is $1/3$. Given $n=2.5 million$, $E(p) = \frac{10^7}{p(2 \times 10^6/p + 1000 \log p)}$. Setting $p=1/3$ we can solve for $p$ that $\frac{1}{3} = \frac{10^7}{p(2 \times 10^6/p + 1000 \log p)}$, which equals to approximately $3438$ processors.
+    \item c) The efficiency formula for 64 processors would be: $\frac{1}{3} = \frac{4n}{64(8\frac{n}{64} + 1000 \log 64)}$. Solving for $n$ would be: $\frac{1}{3} = \frac{4n}{64(8\frac{n}{64} + 1000 \log 64)}$, which equals to approximately $66452$ clock cycles.
+\end{itemize}
+\section{Question 2}
+\begin{itemize}
+
+\item a) \textbf{Best Case:} Happens when the desired element is found in the 1st comparison: 1 comparison \par
+\textbf{Worst Case:} Happens when the desired element is not in the array or is the last element: n comparisons\par
+\textbf{Average Case:} Calculate the avg of all elements: $\text{Average} = \frac{1 + 2 + 3 + \ldots + n}{n} = \frac{\frac{n(n + 1)}{2}}{n} = \frac{n + 1}{2} \text{ comparisons}$
+\item b) \textbf{Best Case (Parallel):} Similar to the serial case, finding $x$ on the first try: Number of comparisons = 1.\par
+
+\textbf{Worst Case (Parallel):} All processors search their subsets fully. Number of comparisons = n since each processor checks $\frac{n}{p} \text{ elements}$.\par
+
+\textbf{Average Case (Parallel):}Calculated as the sum of average comparisons for each processor.
+Average comparisons per processor $= \frac{1 + 2 + \ldots + \frac{n}{p}}{\frac{n}{p}}$.
+$\text{Total average comparisons} = p \times \frac{\frac{n}{p}(\frac{n}{p} + 1)}{2 \times \frac{n}{p}} = \frac{n + p}{2}.$
+\item c) \textbf{Best Possible Speedup:} $\text{Since both best cases are the same.}S_{\text{best}} = \frac{1}{1} = 1.$
+
+
+\textbf{Worst Possible Speedup:} $\text{Considering identical worst cases in serial and parallel.}
+S_{\text{worst}} = \frac{n}{n} = 1.$
+
+\textbf{Average Case Speedup:} $\text{Ratio of serial to parallel average cases.}
+S_{\text{avg}} = \frac{\frac{n + 1}{2}}{\frac{n + p}{2}} = \frac{n + 1}{n + p}.$\par
+
+We can find that:
+\item \text{1. Parallel processing doesn't offer speedup in terms of comparisons.}
+\item \text{2. The complexity remains the same in both cases, showing limited benefit from parallelization.}
+\end{itemize}
+
+\section{Question 3}
+\begin{itemize}
+    \item Theorem:\textbf{Speedup Expression:} Speedup S is defined as the ratio of the serial execution time to the parallel execution time.
+    $S(n, p) = \frac{T(n, 1)}{T(n, p)} = \frac{n^2}{\frac{n^2}{p} + n}.$
+\item % Scenario 1
+\textbf{Scenario 1, Fixed n and Increasing p}: As $ p \text{ increases with fixed } n, \text{ the term } \frac{n^2}{p} \text{ in the denominator decreases.}$
+\text{Speedup } S(n, p) $\text{ approaches } \frac{n^2}{n} = n, \text{ indicating a linear increase in speedup with respect to } p \text{ initially.}$\par
+
+However, beyond a certain point, the term n in the denominator becomes significant, and the speedup will start to plateau.
+\item % Scenario 2
+\textbf{Scenario 2, n Proportional to p:} Let $n = kp \text{ for some constant } k.
+\text{Then, } T(n, p) = \frac{(kp)^2}{p} + kp = k^2p + kp.
+\text{ The speedup } S(kp, p) = \frac{(kp)^2}{k^2p + kp}.
+\text{As both } p \text{ and } n \text{ increase, the speedup will initially increase.}$\par
+$\text{However, since the parallel time's linear term } kp \text{ grows with } p, \text{ the speedup will eventually start to level off.}$\par
+$\text{The efficiency of the algorithm will decrease as } p \text{ grows large relative to } n.$
+
+\item 1. In both scenarios, the speedup increases initially but begins to level off as the number of processors becomes very large.
+\item 2. This behavior is typical in parallel computing where, beyond a certain point, adding more processors leads to diminishing returns.
+\item 3. The efficiency of parallelization depends significantly on the relationship between n and p, and the structure of the parallel algorithm.
+\end{itemize}
+\section{Question 4}
+
+\begin{itemize}
+    \item \textbf{a) Largest Number of Processors for Optimal Efficiency}\par
+$\text{Given: } T_s = n^2, \quad T_p = \frac{n^2}{p} + pn, \text{ Efficiency: } E = \frac{T_s}{p \times T_p} = \frac{n^2}{p \left( \frac{n^2}{p} + pn \right)}$.\par
+$\text{To maximize efficiency, find the balance point where } \frac{n^2}{p} \text{ and } pn \text{ are equal.} \\
+\text{Equating the two terms: } \frac{n^2}{p} = pn. \text{ Solve for } p \text{ in terms of } n, \text{ we find: } p = \sqrt{n}.$
+\item \textbf{b) Scaling Processors with Fixed Memory} \\
+$\text{Given solution from Part (a): } p = \sqrt{n} \\
+\text{Memory required per processor: } M_p = \frac{n}{p} = \frac{n}{\sqrt{n}} = \sqrt{n}. \\
+\text{As } n \text{ increases, } \sqrt{n} \text{ also increases. If the memory available per processor is fixed,}\\
+\text{We cannot scale } p \text{ as it requires increasing memory per processor.}$
+
+\end{itemize}
+\section{Question 5}
+\begin{itemize}
+    \item $\text{Sequential Complexity: } \Theta(n^2) \\
+\text{Parallel Complexity: } T(n, p) = \Theta\left(\frac{n^2}{p} + \frac{n}{\sqrt{p}} \log p\right) \\
+\text{Efficiency: } E = \frac{T_s}{p \times T_p} = \frac{n^2}{p \left( \frac{n^2}{p} + \frac{n}{\sqrt{p}} \log p \right)} \\$
+\end{itemize}
+Our objective is to find the value of p that maximizes E.  the efficiency function E(p) is expected to increase up to a certain point (the optimal number of processors) and then decrease as the overhead becomes more significant. We need to use derivatives to check the function's detailed features, together with its local minimum.\par
+
+For a more precise form, let the time complexity be represented as $c\left(\frac{n^2}{p}+\frac{n}{\sqrt{p}} \log p\right)+k$ where $c$ is a positive constant $>0$ and $k$ is some constant.\par
+
+We differentiate the above function with respect to the variable $p$ :\par
+$$
+T(n, p)=c\left(\frac{n^2}{p}+\frac{n}{\sqrt{p}} \log p\right)+k
+$$
+
+Let's calculate $T^{\prime}(n, p)$, the derivative of $T(n, p)$ with respect to $p$ :
+$$
+\begin{aligned}
+& T^{\prime}(n, p)=c\left(-\frac{n^2}{p^2}+\frac{-1}{2} \cdot \frac{n}{p^{3 / 2}} \log p+\frac{n}{p^{3 / 2}} \cdot log(e)\right) \\
+& T^{\prime}(n, p)=\frac{c \cdot n}{p^{3 / 2}} \cdot\left(-\frac{n}{p^{1 / 2}}-\ln \left(p^{1 / 2}\right)\right).
+\end{aligned}
+$$
+now $-\ln \left(p^{1 / 2}\right) \leq 0$ for $p>=1$ and $-\frac{n}{p^{1 / 2}} \leq 0$ for $n>0$ and $p>=1$
+Thus, we can see that $T(n, p)$ is a non-increasing function for $1<=p<=n^{\wedge} 2$ for fixed $n>0$ as $T^{\prime}(n, p)<=0$ for $1<=p<=$ $n^{\wedge} 2$ In such case, the value of $T(n, p)$ is minimized (i.e maximum possible efficiency is achieved) at the maximum available value of $p$ which is $p=n^2$.
+
+Thus, the maximum number of processors that can be used such that the algorithm runs at maximum possible efficiency is $p=n^2$.
+
+\end{document}
