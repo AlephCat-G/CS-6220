@@ -1,0 +1,132 @@
+\documentclass{article}
+\usepackage{graphicx} 
+\usepackage{geometry}
+\geometry{left=1in, right=1in, top=1in, bottom=1in}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}
+\usepackage{minted}
+\title{CS 6220 HW2}
+\author{Qidian Gao qgao67@gatech.edu}
+\date{Feb 12th 2024}
+
+\begin{document}
+\maketitle
+
+\section{Q1}
+Given an array \(x_0, x_1, \ldots, x_{n-1}\), we want to compute \(s_i = x_0 - x_1 - x_2 - \ldots - x_i\) for all \(0 \leq i \leq n-1\). By assigning negative values to \(x_1\) to \(x_i\), we can transform this into a standard sum problem, facilitating the use of a parallel prefix sum algorithm.
+
+\begin{algorithm}
+\caption{Parallel Prefix Sum Computation}
+\begin{algorithmic}[1]
+\Function{ParallelPrefixSum}{$X[0\ldots n-1]$}
+    \State $n \gets \text{length of } X$
+    \State Create an auxiliary array $Y[0\ldots n-1]$
+    \State $Y[0] \gets X[0]$
+    \For {$i \gets 1$ to $n-1$ \textbf{parallel}}
+        \State $Y[i] \gets -X[i]$ \Comment{Assign negative values to \(x_1\) to \(x_i\)}
+    \EndFor
+    \State Initialize $S[0] \gets Y[0]$
+    \For {$i \gets 1$ to $n-1$ \textbf{parallel}}
+        \State Perform a parallel prefix sum operation on $Y$ to update $S[i]$
+    \EndFor
+    \State \textbf{return} $S$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+The run-time of this parallel prefix sum computation is dominated by the parallel for loop and the parallel prefix sum operation. Given that both are executed in parallel, and that a parallel prefix sum operation can be efficiently performed, the time complexity remains \(O(\log n)\), where \(n\) is the number of elements in the array.
+
+\section{Q2}
+
+\begin{algorithm}[H]
+\caption{Parallel Algorithm for Recursive Sequence Computation}
+\begin{algorithmic}[1]
+\Function{ParallelRecursiveComputation}{$X[0\ldots n-1]$, $Y[0\ldots n-1]$}
+    \State $n \gets \text{length of } X$
+    \State Create auxiliary arrays $P[0\ldots n-1]$ and $S[0\ldots n-1]$
+    \State $P[0] \gets 1$
+    \For {$i \gets 1$ to $n-1$ \textbf{parallel}}
+        \State $P[i] \gets P[i-1] \times X[i-1]$
+    \EndFor
+    \State $S[0] \gets Y[0]$
+    \For {$i \gets 1$ to $n-1$ \textbf{parallel}}
+        \State $S[i] \gets P[i] \times S[i-1] + Y[i]$
+    \EndFor
+    \State \textbf{return} $S$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+The run-time of this algorithm is determined by the two parallel for-loops. The first loop, which computes the prefix products, can be done in $O(\log n)$ using a parallel prefix algorithm (assuming a parallel implementation). The second loop, which combines the prefix products with the $y_i$ values, is independent and thus also takes $O(\log n)$. Thus, the overall complexity of the algorithm is $O(\log n)$.
+
+\section{Q3}
+\begin{algorithm}
+\caption{Parallel Well-Formed Parentheses Check}
+\begin{algorithmic}[1]
+\Function{ParallelParenthesesCheck}{Parentheses Sequence}
+    \State Let $n$ be the length of the Parentheses Sequence.
+    \State Divide the sequence into $p$ blocks, one for each processor.
+    \State Each processor initializes two counters: $leftCount$ and $rightCount$.
+    
+    \For{Each processor $i$ in parallel}
+        \For{Each character $c$ in the block of processor $i$}
+            \If{$c$ is a left parenthesis}
+                \State $leftCount_i \gets leftCount_i + 1$
+            \ElsIf{$c$ is a right parenthesis}
+                \State $rightCount_i \gets rightCount_i + 1$
+                \If{$rightCount_i > leftCount_i$}
+                    \State \textbf{return} False \Comment{Too many right parentheses}
+                \EndIf
+            \EndIf
+        \EndFor
+    \EndFor
+    
+    \State Compute global $leftCount$ and $rightCount$ by reducing across all processors.
+    \If{global $leftCount$ equals global $rightCount$}
+        \State \textbf{return} True
+    \Else
+        \State \textbf{return} False
+    \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+The run-time of the algorithm is determined by the parallel for-loop and the reduction operation. The for-loop has a complexity of $O(n/p)$, where $n$ is the sequence length and $p$ is the number of processors. The reduction operation is typically performed in $O(\log p)$ time. Therefore, the overall complexity of the algorithm is $O(n/p + \log p)$.
+\section{Q4}
+\begin{algorithm}
+\caption{Parallel Array Broadcast}
+\begin{algorithmic}[1]
+\Function{ParallelArrayBroadcast}{$A[0\ldots n-1]$}
+    \State Define a binary associative operation \( op \) where \( op(x, y) = (x \neq 0) ? x : y \).
+    \State Perform a parallel prefix operation on \( A \) using \( op \).
+    \State The result of the parallel prefix gives the broadcasted array.
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+The run-time of the parallel array broadcast is determined by the parallel prefix operation. A parallel prefix operation can typically be done in \( O(\log n) \) time where \( n \) is the number of elements in the array. Therefore, the overall complexity of the parallel array broadcast algorithm is \( O(\log n) \).
+
+\section{Q5}
+\begin{algorithm}[H]
+\caption{Segmented Parallel Prefix Sum}
+\begin{algorithmic}[1]
+\Function{SegmentedParallelPrefix}{$X[0\ldots n-1]$, $B[0\ldots n-1]$}
+    \State Create an auxiliary array \(S[0\ldots n-1]\) for the prefix sums.
+    \State \(S[0] \gets X[0]\)
+    \For{\(i \gets 1\) to \(n-1\) \textbf{in parallel}}
+        \If{\(B[i] = 1\)}
+            \State \(S[i] \gets X[i]\)
+        \Else
+            \State \(S[i] \gets S[i-1] + X[i]\) \Comment{Carry out parallel prefix within segments}
+        \EndIf
+    \EndFor
+    \State \textbf{return} \(S\)
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+The runtime of this algorithm is primarily determined by the parallel execution of the for-loop, which computes the segmented prefix sum. Assuming that the segmentation does not significantly reduce the parallelizability of the operation, the runtime can be approximated by \(O(\log n)\), similar to a standard parallel prefix sum. However, the actual runtime might vary depending on the distribution of segments (as marked by \(B\)) and the efficiency of the parallel computing environment.
+\end{document}

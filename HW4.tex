@@ -1,0 +1,189 @@
+\documentclass{article}
+\usepackage{graphicx} 
+\usepackage{geometry}
+\geometry{left=1in, right=1in, top=1in, bottom=1in}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}
+\usepackage{minted}
+\title{CS 6220 HW4}
+\author{Qidian Gao qgao67@gatech.edu}
+\date{Mar 13th 2024}
+
+\begin{document}
+\maketitle
+\section{Question 1}
+\subsection*{Part (a)}
+Given a 3D torus of size $16 \times 8 \times 16$ and a point $(9, 6, 13)$, we find the rank of the processor using the formula:
+\[
+\text{Rank} = (z \times (\text{dimension}_x \times \text{dimension}_y)) + (y \times \text{dimension}_x) + x
+\]
+Substituting the values:
+\[
+\text{Rank} = (13 \times (16 \times 8)) + (6 \times 16) + 9 = 1769
+\]
+
+\subsection*{Part (b)}
+To find the torus coordinates of processor 532, we use the inverse mapping:
+\begin{align*}
+z &= \left\lfloor \frac{\text{Rank}}{\text{dimension}_x \times \text{dimension}_y} \right\rfloor \\
+y &= \left\lfloor \frac{\text{Rank} \% (\text{dimension}_x \times \text{dimension}_y)}{\text{dimension}_x} \right\lfloor \\
+x &= \text{Rank} \% \text{dimension}_x
+\end{align*}
+Substituting \(\text{Rank} = 532\):
+\begin{align*}
+z &= 4 \\
+y &= 1 \\
+x &= 4
+\end{align*}
+Therefore, the torus coordinates of processor 532 are $(4, 1, 4)$.
+
+\section{Question 2}
+\subsection{(a) Hypercube processor 28:}
+
+Participation at Tree Level 3:
+- Binary representation of 28: 11100
+- The 3rd bit from the right is set (1), so processor 28 participates at tree level 3.
+
+Tree Rank:
+- To calculate the tree rank, we need to remove the bits corresponding to higher levels.
+- Binary representation of 28 at level 3: 100.
+- Tree rank $=28-24=4$.
+
+Hypercube Rank of Tree Parent, Left Child, and Right Child:
+\begin{itemize}
+    \item Tree parent: Flip the 3rd bit to get the parent's rank: 11000
+    \item Hypercube rank of tree parent: 24
+    \item Left child: Append '0' to the binary representation: 111000
+    \item Hypercube rank of left child: 56
+    \item Right child: Append '1' to the binary representation: 111001
+    \item Hypercube rank of right child: 29
+
+\end{itemize}
+\subsection{(b) Hypercube processor 18:}
+
+\begin{itemize}
+    \item Participation at Tree Level 3:
+- Binary representation of 18: 10010
+- The 3rd bit from the right is not set (0), so processor 18 does not participate at tree level 3.
+\item Since hypercube processor 18 does not participate at tree level 3, we do not compute its tree rank or the ranks of its tree parent, left child, and right child.
+\end{itemize}
+\section{Question 3}
+\subsection{Statement:}To prove that the proposed numbering of $\mathrm{a}(\mathrm{p})$-leaf complete binary tree results in an embedding into a $\left(2^p\right)$-processor hypercube with dilation 2, we can follow these steps:\par
+\begin{itemize}
+    \item In a complete binary tree, the inorder traversal numbers the nodes starting from 0 . This means that the leftmost leaf will be numbered 0 , and the numbering increases as we move to the right.
+    \item Each node number in the binary tree can be represented as a binary string of length $\left(\log _2(p)\right) \cdot \operatorname{This}$ is because a complete binary tree with ( $\mathrm{p}$ ) leaves has ( $2 \mathrm{p}-1$ ) nodes, and the highest node number is ( $2 \mathrm{p}-2$ ), which requires $\left(\log _2(p)\right)$ bits to represent in binary.
+    \item $A\left(2^p\right)$-processor hypercube has nodes that can be represented by ( $\mathrm{p}$ )-bit binary strings. Each bit represents a dimension in the hypercube.
+    \item To embed the binary tree into the hypercube, we map the binary representation of each node number in the tree to a unique node in the hypercube. The leftmost leaf (number 0 ) maps to the hypercube node with a binary string of all zeros, and so on.
+    \item Dilation refers to the maximum distance between nodes in the tree and their corresponding nodes in the hypercube. Since the binary tree is complete, the longest path between any two adjacent nodes in the tree (parent and child) is 2 . In the hypercube, this translates to flipping two bits in the binary representation, which corresponds to moving across two dimensions in the hypercube.
+\end{itemize}
+\subsection{Proof: }To prove that the dilation is 2 , we need to show that for any two adjacent nodes in the binary tree, their corresponding nodes in the hypercube are at most 2 bits apart. This is true because moving from a parent to a child node in the binary tree only involves changing the bit that corresponds to the level of the node in the tree. Since the tree is complete, the change in level is always 1 , and thus, the change in the hypercube is at most 2 bits.\par
+
+Therefore, the proposed numbering of $\mathrm{a}(\mathrm{p})$-leaf complete binary tree indeed results in an embedding into a $\left(2^p\right)_{\text {-processor hypercube with }}$ dilation 2 . This demonstrates that the tree can be efficiently mapped onto the hypercube such that the maximum distance between any two adjacent nodes (in terms of hypercube dimensions) is 2 .
+\section{Question 4}
+To design an efficient algorithm for parallel matrix-vector multiplication using 1D column-wise partitioning, we can use the following steps:
+\begin{enumerate}
+    \item Distribute the matrix $A$ among the available processors such that each processor stores complete columns of $A$.
+    \item Distribute the vector $x$ among the processors in a similar fashion, ensuring that each processor has the corresponding elements of $x$.
+    \item Perform local multiplication on each processor, computing the partial result of $y$ locally using the elements of $A$ and $x$ stored on that processor.
+    \item Sum up the partial results obtained from all processors to get the final result vector $y$.
+\end{enumerate}
+
+Here's a more detailed algorithm:
+
+\textbf{Algorithm:}
+\begin{enumerate}
+    \item Distribute the matrix $A$ among the processors, ensuring that each processor has a complete column of $A$.
+    \item Distribute the vector $x$ among the processors, ensuring that each processor has the corresponding elements of $x$.
+    \item Initialize a local vector \textit{local\_y} of size $n$ on each processor.
+    \item For each processor $i$:
+    \begin{itemize}
+        \item Perform local multiplication: For each column $j$ owned by processor $i$, compute \textit{local\_y}$[j] += A[i, j] \times x[j]$.
+    \end{itemize}
+    \item Reduce operation: Sum up all \textit{local\_y} vectors across all processors to get the final result vector $y$.
+\end{enumerate}
+
+\textbf{Analysis:}
+\begin{itemize}
+    \item \textbf{Computation Time:}
+    \begin{itemize}
+        \item Each processor performs local multiplication for the columns it owns, which takes $O(n)$ time.
+        \item Total computation time for all processors is $O(n)$.
+    \end{itemize}
+    \item \textbf{Communication Time:}
+    \begin{itemize}
+        \item In the distribution phase, distributing $A$ and $x$ to the processors takes $O(n)$ communication time.
+        \item In the reduction phase, summing up the \textit{local\_y} vectors across all processors takes $O(n)$ communication time.
+        \item Total communication time is $O(n)$.
+    \end{itemize}
+    \item \textbf{Overall Run-time:}
+    \begin{itemize}
+        \item The overall run-time of the algorithm is dominated by the computation time since it is $O(n)$, while communication time is also $O(n)$.
+        \item Hence, the overall run-time is $O(n)$.
+    \end{itemize}
+\end{itemize}
+
+This algorithm efficiently utilizes parallel processing by distributing the workload among processors and minimizing communication overhead.
+\section{Question 5}
+Each processor will compute the minimum value of $d[k]$ for which $b[k]=0$, and update the corresponding $b[k]$ to 1.
+The communication time between processors is required to exchange the minimum values of $d[k]$ and the corresponding indices.
+The data layout of $A, d$, and $b$ is block partitioned.
+Each processor stores a block of columns of $A$, and a block of $d$ and $b$.
+The communication time is required to exchange the minimum values of $d[k]$ and their corresponding indices between processors.
+The parallel computation time can be calculated as follows:
+\begin{enumerate}
+  \item Each processor computes the minimum value of $d[k]$ for which $b[k]=0$. This operation takes $O(n)$ time.
+  \item Each processor updates the corresponding $b[k]$ to 1. This operation takes $O(1)$ time.
+  \item The communication time is required to exchange the minimum values of $d[k]$ and their corresponding indices between processors. This operation takes $O(p)$ time, as each processor needs to communicate with $p-1$ other processors.
+\end{enumerate}
+
+The total parallel computation time can be calculated as:
+\[
+\begin{aligned}
+T_p &= p^*(O(n)+O(1)+O(p)) \\
+&= p^*(O(n)+O(1)) \\
+&= p * O(n)
+\end{aligned}
+\]
+
+The maximum number of processors that can be used without sacrificing efficiency is the number of processors that can perform the computation and communication operations in parallel.
+
+In this case, the computation and communication operations are independent, and can be performed in parallel by different processors.
+
+Therefore, the maximum number of processors that can be used without sacrificing efficiency is $\mathbf{p}=\mathbf{n}$.
+
+However, this is an ideal case where the computation and communication operations are independent and can be performed in parallel by different processors.
+
+In practice, the efficiency of the parallel algorithm may be limited by the communication time between processors.
+
+The actual maximum number of processors that can be used without sacrificing efficiency may be less than $n$.
+
+Here is the pseudocode for the parallel algorithm:
+\begin{verbatim}
+initialize A, d, and b
+initialize p processors
+initialize communication buffers for each processor
+for i=0 to n-1 do
+  if b[i]=0 then
+    d[i]=A[0, i]
+    b[i]=1
+for i=0 to n-2 do
+  find j such that d[j]=min{d[k] | b[k]=0}
+  b[j]=1
+  for each b[k] that is equal to 0 do
+    d[k]=min(d[k], A[j, k])
+if p>1 then
+  communicate the minimum values of d[k] and their corresponding indices between processors
+for i=0 to n-1 do
+  if b[i]=1 then
+    output the index i
+\end{verbatim}
+
+In this parallel algorithm, each processor computes the minimum value of $d[k]$ for which $b[k]=0$, and updates the corresponding $b[k]$ to 1.
+
+The communication time is required to exchange the minimum values of $d[k]$ and their corresponding indices between processors.
+The computation and communication operations are independent and can be performed in parallel by different processors.
+The maximum number of processors that can be used without sacrificing efficiency is $\mathbf{n}$.
+\end{document}

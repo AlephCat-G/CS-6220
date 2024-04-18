@@ -1,0 +1,106 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{Estimating \(\pi\) using Monte Carlo Method with OpenMP in C/C++}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This document describes the implementation of a parallel program in C/C++ to estimate the value of \(\pi\) using the Monte Carlo method. The method involves generating random points within the unit square \([0,1] \times [0,1]\) and determining the fraction that lies inside the unit circle centered at the origin. The program leverages OpenMP for parallel execution to improve performance, especially for large numbers of points.
+
+\section{Method}
+The program takes an integer \(n\) as input, representing the number of random points to generate. It then calculates the number of points that fall inside the unit circle. The estimated value of \(\pi\) is given by:
+
+\[
+\pi \approx \frac{4 \cdot \text{number of points in the circle}}{n}
+\]
+
+\section{Implementation}
+The following C/C++ code snippet demonstrates the Monte Carlo method for estimating \(\pi\), utilizing OpenMP for parallel processing.
+
+\begin{lstlisting}[language=C]
+#include <omp.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s <number_of_points>\n", argv[0]);
+        return 1;
+    }
+
+    long long int n = atoll(argv[1]);
+    long long int count = 0;
+    double x, y;
+
+    // Set the number of threads
+    omp_set_num_threads(4); // Adjust this to your system
+
+    unsigned int seed;
+    #pragma omp parallel private(x, y, seed)
+    {
+        seed = 25234 + 17 * omp_get_thread_num();
+        #pragma omp for reduction(+:count)
+        for (long long int i = 0; i < n; i++) {
+            x = (double)rand_r(&seed) / RAND_MAX;
+            y = (double)rand_r(&seed) / RAND_MAX;
+            if (x * x + y * y <= 1) count++;
+        }
+    }
+
+    double pi = 4.0 * count / n;
+    printf("Estimated Pi = %f\n", pi);
+
+    return 0;
+}
+\end{lstlisting}
+
+\section{Compilation and Execution}
+To compile this program, use a command such as:
+\begin{verbatim}
+gcc -fopenmp -o monte_carlo_pi monte_carlo_pi.c
+\end{verbatim}
+
+To run the program:
+\begin{verbatim}
+./monte_carlo_pi 1000000
+\end{verbatim}
+
+\end{document}

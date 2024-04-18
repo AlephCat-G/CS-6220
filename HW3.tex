@@ -1,0 +1,106 @@
+\documentclass{article}
+\usepackage{graphicx} 
+\usepackage{geometry}
+\geometry{left=1in, right=1in, top=1in, bottom=1in}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}
+\usepackage{minted}
+\title{CS 6220 HW3}
+\author{Qidian Gao qgao67@gatech.edu}
+\date{Feb 28th 2024}
+
+\begin{document}
+\maketitle
+\section{Question 1}
+The situation can be addressed that when we encounter a bitonic sequence of odd length that requires splitting, we can replicate the final element in the sequence and append this duplicate to the end. It's crucial to tag this appended element that we can easily remove that after the split. By implementing this strategy, we transform the sequence into one of even length while preserving its bitonic nature, thereby easy to split. Once the split has been successfully executed, the previously marked element can be conveniently erased from the sequence. \par
+\begin{center}
+
+% Initial Bitonic Sequence
+l = [8, 13, 17, 14, 10, 7, 4, 3, 5]
+
+% Since the sequence length is odd, we duplicate the last element to make the length even
+l = [8, 13, 17, 14, 10, 7, 4, 3, 5, 5]
+
+% Perform the first bitonic split
+$l_{\text{min}} = [\min(8, 5), \min(13, 3), \min(17, 4), \min(14, 7), \min(10, 10)]$
+$l_{\text{max}} = [\max(8, 5), \max(13, 3), \max(17, 4), \max(14, 7), \max(10, 10)]$
+
+% Compute the min and max sequences
+$l_{\text{min}} = [5, 3, 4, 7, 10]$\par
+$l_{\text{max}} = [8, 13, 17, 14, 10]$\par
+
+% Remove the duplicated element for the max sequence and split again if necessary
+% Since we have an even number of elements now, we proceed with the sorting
+% If we had an odd number, we would duplicate the last element again
+
+% Perform the next level of bitonic splits
+% We compare and exchange elements within each subsequence to ensure they are bitonic
+$l_{\text{min-min}} = [\min(5, 7), \min(3, 4)]$\par
+$l_{\text{min-max}} = [\max(5, 7), \max(3, 4)]$\par
+$l_{\text{max-min}} = [\min(8, 14), \min(13, 10)]$\par
+$l_{\text{max-max}} = [\max(8, 14), \max(13, 10)]$\par
+
+% Compute the new min and max subsequences
+$l_{\text{min-min}} = [5, 3]$\par
+$l_{\text{min-max}} = [7, 4]$\par
+$l_{\text{max-min}} = [8, 10]$\par
+$l_{\text{max-max}} = [14, 13]$\par
+
+% We now have subsequences of length 2, which are trivially bitonic
+% So we simply compare and exchange to get them in non-decreasing order
+$l_{\text{sorted}} = [3, 4, 5, 7, 8, 10, 13, 14]$
+
+% The final sorted sequence is
+$l_{\text{sorted}} = [3, 4, 5, 7, 8, 10, 13, 14]$
+\end{center}
+
+\section{Question 2}
+
+Consider that inverting the order of the second sequence yields a bitonic sequence, conducive to sorting through a bitonic merge process. The operation to reverse the second sequence requires $O(\tau + \mu \frac{n}{p})$ time, where $\tau$ represents the latency, $\mu$ the time per operation, $n$ the number of elements in the sequence, and $p$ the number of processors. For the bitonic merging of a combined sequence of length $m+n$, using $p$ processors, the expected time complexity is $O\left((\tau + \mu \frac{m+n}{p}) \log p\right)$. This encapsulates the initial cost $\tau$, the per-operation cost $\mu$, and the logarithmic factor attributed to the divide-and-conquer nature of the bitonic merge.
+
+\section{Question 3}
+\begin{enumerate}
+\item Each processor computes the destination for its message based on the permutation routing algorithm.
+\item The messages are sent to their respective destinations.
+\item The computation time is \( T_{\text{comp}}(p, p) \).
+\item The communication time for sending messages of size \( m \) is \( T_{\text{comm}}(mp, p) \).
+\end{enumerate}
+
+\section*{(b) Application to Bitonic Sorting}
+
+Applying the above result to the bitonic sorting algorithm gives a new algorithm for permutation routing.
+
+\subsection*{Runtime of the Resulting Algorithm:}
+
+\begin{enumerate}
+\item The computation involves performing compare-and-swap operations on the data elements.
+\item The communication step involves sending and receiving messages between processors.
+\item The runtime of the permutation routing algorithm when applied to bitonic sorting is given by:
+
+\begin{align*}
+\text{Total Runtime} &= T_{\text{comp}}(n, p) + T_{\text{comm}}(n, p) \\
+&= T_{\text{comp}}(p, p) + T_{\text{comm}}(mp, p) \\
+\end{align*}
+
+\end{enumerate}
+
+\section{Question 4}
+
+Given that all processors are interconnected through a common bus and possess the capability to concurrently monitor and read a message transmitted on the bus, the act of one processor dispatching a message over the bus effectively functions as a broadcast to all processors. Consequently, the runtime for this operation can be succinctly expressed as \(O(\tau + \mu m)\), where \(\tau\) denotes the latency, \(\mu\) represents the per-unit message size transmission time, and \(m\) is the message size. For the execution of the reduce operation, it is required that all processors, with the exception of one, transmit their respective messages onto the bus. Considering the fact that while the preparation of messages by the processors can occur simultaneously, the actual transmission over the bus is serialized, the runtime for this operation is thereby delineated as \(O(\tau + \mu m p)\). This formulation accounts for the initial latency (\(\tau\)), the transmission time per unit of message size (\(\mu\)), the size of each message (\(m\)), and the number of processors (\(p\)), illustrating the cumulative effect of serialized message transmission on the operation's runtime.
+
+\section{Question 5}
+Given $p$ processors, consider $k$ among them transmitting a message of size $m$, while the remaining $p-k$ send a message of size $0$. This approach facilitates a $k$-to-all broadcast as part of an All-Gather operation. It is important to note that the largest message size at any point during the All-Gather process will not surpass $k \times m$.
+
+Hence, the runtime for the All-Gather operation under these circumstances is constrained by the following expression:
+\begin{equation*}
+\begin{aligned}
+& \mathcal{O}\left(\tau \log p + \mu m \left(\sum_{i=0}^{\log k - 1} 2^i\right) + \mu m \cdot k \cdot (\log p - \log k)\right) \\
+&= \mathcal{O}\left(\tau \log p + \mu m (2^{\log k} - 1) + \mu m k \log \left(\frac{p}{k}\right)\right) \\
+&= \mathcal{O}\left(\tau \log p + \mu m k + \mu m k \log \left(\frac{p}{k}\right)\right) \\
+&= \mathcal{O}\left(\tau \log p + \mu m k \left(1 + \log \left(\frac{p}{k}\right)\right)\right).
+\end{aligned}
+\end{equation*}
+\end{document}
